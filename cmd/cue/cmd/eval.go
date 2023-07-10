@@ -16,6 +16,9 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"runtime/pprof"
 
 	"github.com/spf13/cobra"
 
@@ -85,6 +88,19 @@ const (
 )
 
 func runEval(cmd *Command, args []string) error {
+
+	// rudifa profiling begin
+	f, err := os.Create("profile.pb.gz")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = pprof.StartCPUProfile(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pprof.StopCPUProfile()
+	// rudifa profiling end
+
 	b, err := parseArgs(cmd, args, &config{outMode: filetypes.Eval})
 	exitOnErr(cmd, err, true)
 
