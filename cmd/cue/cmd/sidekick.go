@@ -18,6 +18,7 @@ package cmd
 
 // Example:
 
+// main.go --------------------------------------------------------------------
 // package main
 
 // import (
@@ -26,14 +27,27 @@ package cmd
 // )
 
 // func main() {
-// 	err := sidekick.Run2("eval sample.cue")
+// 	err := sidekick.RunSidewise("eval", "sample.cue")
 // 	if err != nil {
 // 		log.Println("Error", err)
 // 	}
 // }
 
+// go run . --------------------------------------------------------------------
 // cue-run-demo-2 % go run .
 // value: 42
+
+// sample.cue ------------------------------------------------------------------
+// { value: 21*2 }
+
+// go.mod ----------------------------------------------------------------------
+// module hello-sidekick
+// go 1.20
+
+// replace cuelang.org/go => github.com/rudifa/cue v0.5.0-rudifa
+// require cuelang.org/go v0.5.0
+
+// require (...)
 
 import (
 	"context"
