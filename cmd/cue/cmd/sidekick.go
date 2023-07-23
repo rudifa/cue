@@ -55,9 +55,6 @@ import (
 
 // RunSidewise runs the given cue command with the arguments.
 func RunSidewise(cmd string, args ...string) error {
-
-	allArgs := []string{cmd}
-	allArgs = append(allArgs, args...)
-
+	allArgs := append([]string{cmd}, args...)
 	return mainErr(context.Background(), allArgs)
 }
