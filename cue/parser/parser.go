@@ -84,6 +84,7 @@ func (p *parser) init(filename string, src []byte, mode []Option) {
 	p.trace = p.mode&traceMode != 0 // for convenience (p.trace is used frequently)
 
 	p.comments = &commentState{pos: -1}
+	p.CuedoPrintCommentState("◂")
 
 	p.next()
 }
@@ -138,6 +139,8 @@ func (p *parser) openComments() *commentState {
 		p.leadComment = nil
 	}
 	p.comments = child
+
+	p.CuedoPrintCommentState("◂")
 	return child
 }
 
@@ -153,14 +156,19 @@ func (p *parser) openList() {
 		isList: 1,
 	}
 	p.comments = c
+	p.CuedoPrintCommentState("◂")
 }
 
 func (c *commentState) add(g *ast.CommentGroup) {
 	g.Position = c.pos
+	// cuedoLogCommentState(*c) // let the callers do it
+
 	c.groups = append(c.groups, g)
 }
 
 func (p *parser) closeList() {
+	p.CuedoPrintCommentState("▸")
+
 	c := p.comments
 	if c.lastChild != nil {
 		for _, cg := range c.groups {
@@ -183,8 +191,10 @@ func (p *parser) closeList() {
 			parent.groups = append(parent.groups, c.groups...)
 		}
 		parent.pos++
+
 		p.comments = parent
 	}
+	p.CuedoPrintCommentState("◂")
 }
 
 func (c *commentState) closeNode(p *parser, n ast.Node) ast.Node {
@@ -197,12 +207,18 @@ func (c *commentState) closeNode(p *parser, n ast.Node) ast.Node {
 		}
 		return n
 	}
+
+	CuedoLogStackOneline()
+	p.CuedoPrintCommentState("▸", "TOS")
+	// p.CuedoPrintNode(n)
 	p.comments = c.parent
 	if c.parent != nil {
 		c.parent.lastChild = n
 		c.parent.lastPos = c.pos
 		c.parent.pos++
+		p.CuedoPrintCommentState("popped c: c.parent.pos++")
 	}
+
 	for _, cg := range c.groups {
 		if n != nil {
 			if cg != nil {
@@ -210,7 +226,13 @@ func (c *commentState) closeNode(p *parser, n ast.Node) ast.Node {
 			}
 		}
 	}
+
 	c.groups = nil
+
+	p.CuedoPrintCommentState("◂")
+	p.CuedoPrintNode(n, c, "◂")
+	p.CuedoSpew(n)
+
 	return n
 }
 
@@ -273,6 +295,10 @@ func (p *parser) next0() {
 	}
 
 	p.pos, p.tok, p.lit = p.scanner.Scan()
+
+	p.CuedoPrintToken()
+	CuedoLogStackOneline()
+	// p.CuedoPrintCommentState("◂", "next0") // no change to comment state in next0
 }
 
 // Consume a comment and return it and the line on which it ends.
@@ -322,6 +348,7 @@ func (p *parser) consumeCommentGroup(prevLine, n int) (comments *ast.CommentGrou
 	cg := &ast.CommentGroup{List: list}
 	ast.SetRelPos(cg, rel)
 	comments = cg
+	p.CuedoPrintGroup(*comments)
 	return
 }
 
@@ -343,12 +370,14 @@ func (p *parser) next() {
 	// A leadComment may not be consumed if it leads an inner token of a node.
 	if p.leadComment != nil {
 		p.comments.add(p.leadComment)
+		p.CuedoPrintCommentState("▸")
+
 	}
 	p.leadComment = nil
 	prev := p.pos
 	p.next0()
 	p.comments.pos++
-
+	p.CuedoPrintCommentState("▸", "from next0, pos++")
 	if p.tok == token.COMMENT {
 		var comment *ast.CommentGroup
 		var endline int
@@ -372,6 +401,8 @@ func (p *parser) next() {
 			if comment != nil {
 				p.comments.add(comment)
 			}
+			p.CuedoPrintCommentState("consume succ comments")
+
 			comment, endline = p.consumeCommentGroup(prevLine, 1)
 			prevLine = currentLine
 			currentLine = p.file.Line(p.pos)
@@ -386,6 +417,8 @@ func (p *parser) next() {
 		} else {
 			p.comments.add(comment)
 		}
+
+		p.CuedoPrintCommentState("⍇ⓒ", "◂")
 	}
 }
 
@@ -405,7 +438,6 @@ func (p *parser) assertV0(pos token.Pos, minor, patch int, name string) {
 }
 
 func (p *parser) errf(pos token.Pos, msg string, args ...interface{}) {
-	// ePos := p.file.Position(pos)
 	ePos := pos
 
 	// If AllErrors is not set, discard errors reported on the same line
@@ -656,7 +688,7 @@ func (p *parser) parseIndexOrSlice(x ast.Expr) (expr ast.Expr) {
 	c := p.openComments()
 	defer func() { c.closeNode(p, expr) }()
 	c.pos = 1
-
+	p.CuedoPrintCommentState("after openComments")
 	const N = 2
 	lbrack := p.expect(token.LBRACK)
 
@@ -1113,6 +1145,7 @@ func (p *parser) parseComprehensionClauses(first bool) (clauses []ast.Clause, c 
 				value = p.parseIdent()
 			}
 			c.pos = 4
+			p.CuedoPrintCommentState()
 			// params := p.parseParams(nil, ARROW)
 			clauses = append(clauses, c.closeClause(p, &ast.ForClause{
 				For:    forPos,
@@ -1402,6 +1435,7 @@ L:
 		case token.PERIOD:
 			c := p.openComments()
 			c.pos = 1
+			p.CuedoPrintCommentState("after openComments")
 			p.next()
 			switch p.tok {
 			case token.IDENT:
@@ -1504,6 +1538,7 @@ func (p *parser) parseBinaryExprTail(prec1 int, x ast.Expr) ast.Expr {
 		}
 		c := p.openComments()
 		c.pos = 1
+		p.CuedoPrintCommentState("after openComments")
 		pos := p.expect(p.tok)
 		x = c.closeExpr(p, &ast.BinaryExpr{
 			X:     p.checkExpr(x),
@@ -1531,6 +1566,7 @@ func (p *parser) parseInterpolation() (expr ast.Expr) {
 
 	for p.tok == token.LPAREN {
 		c.pos = 1
+		p.CuedoPrintCommentState("after openComments")
 		p.expect(token.LPAREN)
 		cc.closeExpr(p, last)
 
