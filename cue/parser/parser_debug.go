@@ -34,7 +34,7 @@ import (
 )
 
 // ----------------------------------------------------------------------------
-// export debug functions for use in applications
+// export debug functions for use in CLI applications
 
 func DebugAstTree(n ast.Node) string {
 	return helper.DebugAstTree(n)
