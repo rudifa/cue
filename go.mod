@@ -2,9 +2,12 @@ module cuelang.org/go
 
 go 1.21
 
+//replace github.com/rudifa/goutil => ../goutil
+
 require (
 	cuelabs.dev/go/oci/ociregistry v0.0.0-20240404174027-a39bec0462d2
 	github.com/cockroachdb/apd/v3 v3.2.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/emicklei/proto v1.10.0
 	github.com/go-quicktest/qt v1.101.0
 	github.com/google/go-cmp v0.6.0
@@ -15,6 +18,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20230328191034-3462fbc510c0
 	github.com/rogpeppe/go-internal v1.12.0
+	github.com/rudifa/goutil v0.4.9
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tetratelabs/wazero v1.6.0

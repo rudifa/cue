@@ -157,7 +157,7 @@ func (c *comments) AddComment(cg *CommentGroup) {
 	if c.groups == nil {
 		a := []*CommentGroup{cg}
 		c.groups = &a
-		return
+		return // suppressing return: gets worse: bar["baz" //some comment //some comment],
 	}
 
 	*c.groups = append(*c.groups, cg)

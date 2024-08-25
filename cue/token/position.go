@@ -164,6 +164,18 @@ func (p Pos) Offset() int {
 	return p.Position().Offset
 }
 
+// CuedoSafeOffset reports the byte offset relative to the file,
+// or -1 if p is invalid, due to an offset outside of the file bounds.
+func (p Pos) CuedoSafeOffset() (offset int) {
+	offset = -1 // default invalid value
+	defer func() {
+		if r := recover(); r != nil {
+			// log.Printf("Recovered from panic: %v\n", r)
+		}
+	}()
+	return p.Offset() // Call the original method that may panic
+}
+
 // Add creates a new position relative to the p offset by n.
 func (p Pos) Add(n int) Pos {
 	return Pos{p.file, p.offset + toPos(index(n))}

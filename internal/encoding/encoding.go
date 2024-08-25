@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -239,7 +240,12 @@ func NewDecoder(f *build.File, cfg *Config) *Decoder {
 	switch f.Encoding {
 	case build.CUE:
 		if cfg.ParseFile == nil {
-			i.file, i.err = parser.ParseFile(path, r, parser.ParseComments)
+			// i.file, i.err = parser.ParseFile(path, r, parser.ParseComments)
+			if os.Getenv("CUEDO_PARSER_TRACE") != "" {
+				i.file, i.err = parser.ParseFile(path, r, parser.ParseComments, parser.Trace)
+			} else {
+				i.file, i.err = parser.ParseFile(path, r, parser.ParseComments)
+			}
 		} else {
 			i.file, i.err = cfg.ParseFile(path, r)
 		}
