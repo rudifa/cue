@@ -2,20 +2,24 @@ module cuelang.org/go
 
 go 1.20
 
+//replace github.com/rudifa/goutil => ../goutil
+
 require (
 	cuelabs.dev/go/oci/ociregistry v0.0.0-20231217163254-6feb86eb6e06
 	github.com/cockroachdb/apd/v3 v3.2.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/emicklei/proto v1.10.0
 	github.com/go-quicktest/qt v1.101.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/kr/pretty v0.3.1
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc4
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20230328191034-3462fbc510c0
 	github.com/rogpeppe/go-internal v1.12.0
+	github.com/rudifa/goutil v0.4.9
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tetratelabs/wazero v1.6.0

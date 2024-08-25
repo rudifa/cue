@@ -15,7 +15,9 @@
 package format
 
 import (
+	"encoding/hex"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -24,6 +26,7 @@ import (
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/literal"
 	"cuelang.org/go/cue/token"
+	"github.com/rudifa/goutil/stacktrace"
 )
 
 // A printer takes the stream of formatting tokens and spacing directives
@@ -354,13 +357,17 @@ func (p *printer) writeString(s string, isLit bool) {
 		// unchanged. Note that valid Go programs cannot contain
 		// tabwriter.Escape bytes since they do not appear in legal
 		// UTF-8 sequences.
-		p.output = append(p.output, tabwriter.Escape)
+
+		//p.output = append(p.output, tabwriter.Escape)
+		p.append(tabwriter.Escape)
 	}
 
-	p.output = append(p.output, s...)
+	//p.output = append(p.output, s...)
+	p.append(s)
 
 	if isLit {
-		p.output = append(p.output, tabwriter.Escape)
+		//p.output = append(p.output, tabwriter.Escape)
+		p.append(tabwriter.Escape)
 	}
 	// update positions
 	nLines := 0
@@ -384,7 +391,8 @@ func (p *printer) writeString(s string, isLit bool) {
 
 func (p *printer) writeByte(ch byte, n int) {
 	for i := 0; i < n; i++ {
-		p.output = append(p.output, ch)
+		//p.output = append(p.output, ch)
+		p.append(ch)
 	}
 
 	// update positions
@@ -395,7 +403,8 @@ func (p *printer) writeByte(ch byte, n int) {
 
 		n := p.cfg.Indent + p.indent // include base indentation
 		for i := 0; i < n; i++ {
-			p.output = append(p.output, '\t')
+			// p.output = append(p.output, '\t')
+			p.append('\t')
 		}
 
 		// update positions
@@ -425,4 +434,40 @@ func mayCombine(prev, next token.Token) (before, after bool) {
 		before = s[0] == '*' // /*
 	}
 	return before, false
+}
+
+// append appends args to p.output.
+func (p *printer) append(args ...interface{}) {
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case string:
+			p.output = append(p.output, []byte(v)...)
+		case byte:
+			p.output = append(p.output, v)
+		case rune:
+			p.output = append(p.output, byte(v))
+		default:
+			panic(fmt.Sprintf("unsupported type %T", v))
+		}
+	}
+
+	CuedoLogStackOneline()
+	p.CuedoHexDump()
+}
+
+// CuedoHexDump logs the hexdump of the printer's output
+func (p *printer) CuedoHexDump() {
+	if os.Getenv("CUEDO_FORMATTER_HEXDUMP") != "" {
+		log.Printf("p.output:\n%s\n", hex.Dump(p.output))
+	}
+}
+
+// CuedoLogStackOneline logs the stacktrace at the point of call
+func CuedoLogStackOneline() {
+	if os.Getenv("CUEDO_FORMATTER_STACKTRACE") != "" {
+		st := stacktrace.CapturedStacktrace()
+		st.Trim(6, 3) // trim off the uninteresting, repeating callpoints
+		callpoints := st.StacklineCallpoints()
+		log.Printf("stacktrace: %s\n", callpoints)
+	}
 }

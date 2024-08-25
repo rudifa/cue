@@ -16,3 +16,7 @@ cmd/cue/cue
 # Note that CI requires a clean git repo when it finishes,
 # so we don't want it to think the credentials file is untracked.
 gha-creds-*.json
+
+.tmp/
+
+parser_test.json

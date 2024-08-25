@@ -692,8 +692,15 @@ bar: 2
 			if got != tc.out {
 				t.Errorf("\ngot  %q;\nwant %q", got, tc.out)
 			}
+
+			CuedoExtractTestCases(testCases, "parser_test.json")
 		})
 	}
+}
+
+// CuedoRunParseTest runs the parse test.
+func CuedoRunParseTest() {
+	TestParse(&testing.T{})
 }
 
 func TestStrict(t *testing.T) {
