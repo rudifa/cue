@@ -15,7 +15,11 @@
 package parser
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 	"testing"
 
@@ -717,8 +721,56 @@ bar: 2
 			if got != tc.out {
 				t.Errorf("\ngot  %q;\nwant %q", got, tc.out)
 			}
+
+			cuedoExtractTestCases(testCases, "parser_test.json")
 		})
 	}
+}
+
+// cuedoExtractTestCases extracts the test cases from the test file and writes them to a json file
+// compatible with the test cases in cue/parser/parser_test.go
+func cuedoExtractTestCases(testCases []struct{ desc, in, out string }, outfilename string) {
+
+	if outfilename == "" {
+		outfilename = "parser_test.json"
+	}
+
+	type ExportedStruct struct {
+		Desc, In, Out string
+	}
+
+	convert := func(s struct{ desc, in, out string }) ExportedStruct {
+		return ExportedStruct{s.desc, s.in, s.out}
+	}
+
+	exported := make([]ExportedStruct, len(testCases))
+	for i, s := range testCases {
+		exported[i] = convert(s)
+	}
+
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetIndent("", "\t")
+	if err := enc.Encode(exported); err != nil {
+		log.Fatalf("%s\n", err)
+	}
+
+	// write to file
+	file, err := os.Create(outfilename)
+	if err != nil {
+		log.Fatalf("Failed to create file: %s\n", err)
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(buf.String())
+	if err != nil {
+		log.Fatalf("Failed to write to file: %s\n", err)
+	}
+}
+
+// CuedoRunParseTest runs the parse test.
+func CuedoRunParseTest() {
+	TestParse(&testing.T{})
 }
 
 func TestStrict(t *testing.T) {
